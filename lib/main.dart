@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:time_tracker/pages/homepage.dart';
+import 'package:time_tracker/provider/themeprovider.dart';
 
 void main(List<String> args) {
   runApp(
     // wrapping the change notifier in runapp function
     ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+      create: (context) => ThemeProvider(),
       child: const MyApp(),
     ),
   );
@@ -29,18 +30,5 @@ class MyApp extends StatelessWidget {
         );
       },
     );
-  }
-}
-
-// setup of themeprovider
-class ThemeProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
-
-  ThemeMode get themeMode => _themeMode;
-
-  void toggleTheme() {
-    _themeMode =
-        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    notifyListeners();
   }
 }
