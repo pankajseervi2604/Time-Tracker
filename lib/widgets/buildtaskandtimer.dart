@@ -1,8 +1,9 @@
 import 'dart:ui';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
+import 'package:time_tracker/firebase%20services/crud_services.dart';
 
 class Buildtaskandtimer extends StatefulWidget {
   const Buildtaskandtimer({super.key});
@@ -15,6 +16,8 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
   final _taskName = TextEditingController();
   bool _isRunning = false;
 
+  final service = CrudServices();
+
   final StopWatchTimer _stopWatchTimer = StopWatchTimer(
     mode: StopWatchMode.countUp,
   );
@@ -24,11 +27,12 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
     return buildTaskAndTimer(context, _taskName);
   }
 
-  Widget buildTaskAndTimer(BuildContext context, TextEditingController controller) {
+  Widget buildTaskAndTimer(
+      BuildContext context, TextEditingController controller) {
     return Column(
       children: [
         Container(
-          height: 300,
+          height: 500,
           width: 400,
           decoration: BoxDecoration(
             border: Border.all(
@@ -58,8 +62,8 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                     backgroundColor: Colors.deepPurple,
                   ),
                   onPressed: () {
-                    int _selectedHour = 0;
-                    int _selectedMinute = 0;
+                    int selectedHour = 0;
+                    int selectedMinute = 0;
                     showModalBottomSheet(
                       context: context,
                       shape: RoundedRectangleBorder(
@@ -69,6 +73,7 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                       ),
                       isScrollControlled: true,
                       builder: (context) {
+                        // 'statefullbuilder' to access the state in bottom sheet
                         return StatefulBuilder(
                           builder: (context, setState) => Padding(
                             padding: EdgeInsets.only(
@@ -152,10 +157,10 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                                                         infiniteLoop: false,
                                                         itemHeight: 40,
                                                         itemWidth: 80,
-                                                        value: _selectedHour,
+                                                        value: selectedHour,
                                                         onChanged: (value) {
                                                           setState(() {
-                                                            _selectedHour =
+                                                            selectedHour =
                                                                 value;
                                                           });
                                                         },
@@ -188,7 +193,7 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                                                   ),
                                                   Column(
                                                     children: [
-                                                      Text("Hours"),
+                                                      Text("Minutes"),
                                                       SizedBox(
                                                         height: 5,
                                                       ),
@@ -196,14 +201,14 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                                                         haptics: true,
                                                         minValue: 0,
                                                         maxValue: 60,
-                                                        value: _selectedMinute,
+                                                        value: selectedMinute,
                                                         zeroPad: true,
                                                         infiniteLoop: false,
                                                         itemHeight: 40,
                                                         itemWidth: 80,
                                                         onChanged: (value) {
                                                           setState(() {
-                                                            _selectedMinute =
+                                                            selectedMinute =
                                                                 value;
                                                           });
                                                         },
@@ -252,8 +257,11 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                                     backgroundColor: Colors.deepPurple,
                                   ),
                                   onPressed: () {
-                                    _taskName.clear();
+                                    // adding task
+                                    service.addTask(_taskName.text.trim(),
+                                        selectedHour, selectedMinute);
                                     Navigator.pop(context);
+                                    _taskName.clear();
                                   },
                                   child: Text(
                                     "Add task",
@@ -261,6 +269,9 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                                       color: Colors.white,
                                     ),
                                   ),
+                                ),
+                                SizedBox(
+                                  height: 20,
                                 ),
                               ],
                             ),
@@ -281,7 +292,64 @@ class _BuildtaskandtimerState extends State<Buildtaskandtimer> {
                   ),
                 ),
                 Divider(),
-                // todo adding task data should be displayed below
+                // todo : added task data should be displayed below
+                StreamBuilder(
+                  stream: service.getTaskData(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      final taskList = snapshot.data!.docs;
+                      return SizedBox(
+                        height: 370,
+                        child: ListView.builder(
+                          itemCount: taskList.length,
+                          itemBuilder: (context, index) {
+                            // get individual doc
+                            DocumentSnapshot document = taskList[index];
+                            String docID = document.id;
+
+                            // get task from each doc
+                            Map<String, dynamic> data =
+                                document.data() as Map<String, dynamic>;
+                            String taskName = data['task_name'];
+                            int timeInHour = data['duration_hours'];
+                            int timeInMinutes = data['duration_minutes'];
+                            return ListTile(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: BorderSide(color: Colors.deepPurple),
+                              ),
+                              title: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    taskName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 20,
+                                  ),
+                                  Text(
+                                    "${timeInHour.toString().padLeft(2, '0')} : ${timeInMinutes.toString().padLeft(2, '0')}",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              splashColor: Colors.grey[50],
+                              onTap: () {},
+                            );
+                          },
+                        ),
+                      );
+                    } else {
+                      return Text("No Tasks found, try to create one");
+                    }
+                  },
+                ),
               ],
             ),
           ),

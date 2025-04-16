@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import 'package:time_tracker/provider/themeprovider.dart';
-import 'package:time_tracker/widgets/buildhistory.dart';
 import 'package:time_tracker/widgets/buildtaskandtimer.dart';
 
 class Homepage extends StatefulWidget {
@@ -55,14 +54,14 @@ class _HomepageState extends State<Homepage> {
           // using layoutbuilder for responsive UI
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // if maxwidth is smaller that 850 use vertical layout or else use horizontal layout
+              // if maxwidth < 850  ?  use vertical layout : else use horizontal layout
               bool isNarrow = constraints.maxWidth < 850;
               return isNarrow
                   ? Column(
                       children: [
                         Buildtaskandtimer(),
                         SizedBox(height: 20),
-                        buildHistory(),
+                        
                       ],
                     )
                   : Row(
@@ -71,7 +70,7 @@ class _HomepageState extends State<Homepage> {
                       children: [
                         Buildtaskandtimer(),
                         SizedBox(width: 20),
-                        buildHistory(),
+                        
                       ],
                     );
             },
